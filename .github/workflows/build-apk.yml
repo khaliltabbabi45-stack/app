@@ -1,140 +1,42 @@
 name: Build Android APK
 
-
-
-on:
-
-  push:
-  
-    branches: [ main ]
-    
-  workflow_dispatch:
-  
-
+on: [push, workflow_dispatch]
 
 permissions:
-
   contents: write
-  
-
 
 jobs:
-
   build:
-  
     runs-on: ubuntu-latest
-    
     steps:
-    
-      - name: Checkout repository
-      
-        uses: actions/checkout@v4
-        
-      - name: Unpack Android project
-      
+      - uses: actions/checkout@v4
+      - name: Unpack project
         run: unzip -q floating-gaming-assistant.zip -d .
-        
-      - name: Set up Java 17
-      
-        uses: actions/setup-java@v4
-        
+      - uses: actions/setup-java@v5
         with:
-        
           distribution: temurin
-          
           java-version: '17'
-          
-      - name: Set up Android SDK
-      
-        uses: android-actions/setup-android@v3
-        
       - name: Install Android SDK packages
-      
-        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
-        
-      - name: Set up Gradle
-      
-        uses: gradle/gradle-build-action@v3
-        
+        run: |
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager "platforms;android-35" "build-tools;35.0.0"
+      - uses: gradle/actions/setup-gradle@v4
         with:
-        
           gradle-version: '8.2'
-          
-      - name: Build debug APK
-      
+      - name: Build APK
         working-directory: floating-gaming-assistant
-        
         run: gradle :app:assembleDebug --no-daemon --stacktrace
-        
-      - name: Upload APK artifact
-      
-        uses: actions/upload-artifact@v4
-        
+      - uses: actions/upload-artifact@v4
         with:
-        
           name: pulse-floating-assistant-apk
-          
           path: floating-gaming-assistant/app/build/outputs/apk/debug/app-debug.apk
-          
-          if-no-files-found: error
-          
-      - name: Publish GitHub Release
-      
+      - name: Publish Release
         uses: softprops/action-gh-release@v2
-        
         with:
-        
-          tag_name: v1.0.${{ github.run_number }}
-          
-          name: Pulse Floating Gaming Assistant v1.0.${{ github.run_number }}
-          
-          generate_release_notes: true
-          
+          tag_name: latest
+          name: Latest APK
+          make_latest: true
+          overwrite_files: true
           files: floating-gaming-assistant/app/build/outputs/apk/debug/app-debug.apk
-          
         env:
-        
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
